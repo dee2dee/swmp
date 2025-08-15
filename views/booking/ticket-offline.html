@@ -1,0 +1,271 @@
+{{ define "content" }}
+<div class="container">
+    <!-- Judul -->
+    <h2 class="text-start fw-bold mt-5">
+        <i class="material-icons">offline_bolt</i> Booking Form
+    </h2>
+
+    <!-- Form Input & Tombol -->
+    <div class="mt-5">
+        <form id="bookingForm">
+            <div>
+                <input type="hidden" id="hargaDewasa" data-harga="{{ .harga_dewasa }}" value="{{ .harga_dewasa }}" readonly>
+                <input type="hidden" id="hargaAnak" data-harga="{{ .harga_anak }}" value="{{ .harga_anak }}" readonly>
+                <input type="hidden" id="kasir" value="{{ .fullname }}">
+                <input type="hidden" id="metodePembayaran" value="Cash">
+                <input type="hidden" id="kodeBooking">
+                <input type="hidden" id="kodeTrxID">
+            </div>
+
+            <!-- Baris Input & Tombol -->
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex gap-3">
+                    <!-- Input Pemesan -->  
+                    <div class="col-md-3 col-sm-4">
+                        <label for="namaPemesan" class="form-label">PEMESAN</label>
+                        <input type="text" class="form-control" id="namaPemesan">  
+                    </div>  
+
+                    <!-- Input Dewasa -->  
+                    <div class="col-md-2 col-sm-4">
+                        <label for="dewasa" class="form-label">DEWASA</label>
+                        <input type="text" class="form-control" id="dewasa">
+                    </div>  
+
+                    <!-- Input Anak -->  
+                    <div class="col-md-2 col-sm-4">
+                        <label for="anak" class="form-label">ANAK</label>
+                        <input type="text" class="form-control" id="anak">  
+                    </div>
+                </div>
+                <!-- Total Bayar -->
+                <h1 style="width: 70%;height: 100px; padding-top: 10px; text-align: right;color: #ffcc00;"><span id="totalBayar"></span></h1>
+            </div>  
+        </form>
+    </div>
+
+    <!-- Tabel Detail -->
+    <div class="card-body table-wrapper">
+        <div style="height: 200px; overflow-y: auto;">
+            <table class="text-center table-clean" style="width: 100%;">
+                <thead style="background-color: #4facfe; color: black;">
+                    <tr>
+                        <th style="border-top-left-radius: 6px;">KATEGORI</th>
+                        <th>QTY</th>
+                        <th>HARGA SATUAN</th>
+                        <th></th>
+                        <th style="text-align: right; padding-right: 20px;border-top-right-radius: 6px;">RUPIAH</th>
+                    </tr>
+                </thead>
+                <tbody id="detailTable" class="table-bordered">
+                <!-- Baris data akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    
+        <table class="text-center" style="width: 100%;">
+            <tfoot style="color: black; background-color: #f1f1f1;">
+                <tr>  
+                <td colspan="3"></td>
+                <td class="poppins-semibold" style="height: 30px;text-align: right; width: 200px;padding-right: 10px;">Sub Total</td>  
+                <td style="width: 200px;text-align: right;">
+                    <span id="subTotal" class="poppins-semibold"></span>
+                </td>
+                </tr>
+                <tr>  
+                <td colspan="3"></td>
+                <td class="poppins-light" style="height: 30px;text-align: right; width: 200px;padding-right: 10px;">Diskon</td>  
+                <td style="width: 200px;text-align: right;">
+                    <span id="diskon"></span>
+                </td>
+                </tr>
+                <tr>  
+                <td colspan="3"></td>
+                <td class="poppins-semibold" style="height: 30px;text-align: right; width: 200px;padding-right: 10px;color:darkorange">Total</td>  
+                <td style="width: 200px;text-align: right;">
+                    <span id="total" class="poppins-semibold" style="color:darkorange"></span>
+                </td>
+                </tr>
+            </tfoot>
+        </table>
+        <div class="d-flex justify-content-between align-items-center mt-0 p-2" style="background-color: #f1f1f1; border-radius: 8px;">
+            <div>
+                <span style="color: #333;">Kuota Tersisa:</span>
+                <span style="color: #0077b6; font-weight: bold;">Dewasa: <span id="quotaDewasa"></span></span>,
+                <span style="color: #ef476f; font-weight: bold;">Anak-Anak: <span id="quotaAnak"></span></span>
+            </div>
+            <div style="padding-right: 1px;">
+                <button type="button" class="btn" id="bayarTunai">Bayar Rp. 0</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Error -->
+    <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                <h5 class="modal-title" id="errorModalLabel" style="color: black;">
+                    <i class="fas fa-exclamation-triangle" style="color: orange; margin-right: 10px;"></i>
+                    Error!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="color: #dc3545;background-color: #d1f3ff;" id="modalErrorMessage">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" id="btnErrClose" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Peringatan Input Kosong -->
+    <div class="modal fade" id="modalKosong" tabindex="-1" aria-labelledby="modalKosongLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                <h5 class="modal-title" id="modalKosongLabel" style="color: black;">
+                    <i class="fas fa-exclamation-triangle" style="color: orange; margin-right: 10px;"></i>
+                    Perhatian!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="color: black;">
+                <p>Silakan masukan nama pemesan, input dewasa dan input anak</p>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn" id="closeModalKosong" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk pesan "Nominal kurang!" -->
+    <div class="modal fade" id="modalNominalKurang" tabindex="-1" aria-labelledby="modalNominalKurangLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                    <h5 class="modal-title" id="modalNominalKurangLabel" style="color: black;">
+                        <i class="fas fa-exclamation-triangle" style="color: orange; margin-right: 10px;"></i>
+                        Error!
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="color: #dc3545;background-color: #d1f3ff;">
+                    <p>Nominal Tunai yang Anda masukkan kurang. Mohon periksa kembali.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal" id="closeModalBtn">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                    <h5 class="modal-title" id="confirmationModalLabel" style="color: black;">
+                        <i class="fas fa-info-circle" style="color: green; margin-right: 10px;"></i>
+                        Confirm
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="color: black;">
+                    <h4><p id="modalKembalian"></p></h4>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal" id="psnBatal">Batal</button>
+                    <button type="button" class="btn" id="confrmPesanan">Konfirmasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal Konfirmasi Bayar-->
+    <div class="modal fade" id="modalKonfirmasiBayar" tabindex="-1" aria-labelledby="modalLabelKonfirmasiBayar" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #005B96;">
+                        <h5 class="modal-title" id="confirmationModalLabel" style="color: white;">
+                            <i class="fas fa-info-circle" style="color: white; margin-right: 10px;"></i>
+                            Konfirmasi Pembayaran
+                        </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="color: black;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <strong style="min-width: 80px;padding-top: 10px;">TOTAL</strong>
+                        <span class="poppins-semibold modalTotal" id="modalTotal" style="height: 50px;">0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="min-width: 80px;padding-top: 4px;">CASH</strong>
+                        <input type="text" class="poppins-semibold modalCash" id="modalCash" style="height: 50px;">
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between;">
+                        <strong style="min-width: 80px;padding-top: 15px;">KEMBALI</strong>
+                        <span class="poppins-semibold modalKembali" id="modalKembali" style="height: 50px;">0</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal" id="btnBatal">Batal</button>
+                    <button type="button" class="btn" id="btnKonfirmasi">Konfirmasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Kuota Habis -->
+    <div class="modal fade" id="kuotaModal" tabindex="-1" aria-labelledby="kuotaModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="kuotaModalLabel" style="color: black;">
+                    <i class="fas fa-exclamation-triangle" style="color: orange; margin-right: 10px;"></i>
+                    Kuota Habis!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body" id="modalKuotaBody" style="color: black;">
+            <!-- Pesan akan diubah via JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" data-bs-dismiss="modal" id="btnTutup">Tutup</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview Struk -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered custom-width">
+        <div class="modal-content">
+            <div class="modal-header justify-content-center" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                <h5 class="modal-title" id="previewModalLabel" style="color: black;">
+                    Preview Struk
+                </h5>
+            </div>            
+            <div class="modal-body" style="color: black;">
+                <pre id="printContent" style="font-family: monospace; font-size: 12px; white-space: pre;"></pre>
+            </div>
+
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn" data-bs-dismiss="modal" id="btnCetak">Cetak</button>
+                <button type="button" class="btn" data-bs-dismiss="modal" id="btnBatalCetak">Batal</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Tempat khusus untuk menampilkan data struk saat print -->
+    <div id="printSection" style="display: none;"></div>
+    
+</div>
+<script src="/static/js/tic-offline.js"></script>
+
+{{ end }}

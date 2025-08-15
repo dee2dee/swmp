@@ -1,0 +1,505 @@
+{{ define "content" }}
+<div class="container">
+    <!-- Judul -->
+    <h2 class="text-start fw-bold mt-5">
+        <i class="material-icons">online_prediction</i> Scan Barcode
+    </h2>
+    <div class="mt-5">
+        <form id="bookingForm">
+            <div>
+                <input type="hidden" id="kasir" value="{{ .fullname }}">
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex gap-3">
+                    <div class="col-md-6 col-sm-4">
+                        <label for="kodeBooking" class="form-label">KODE BOOKING</label>
+                        <input type="text" class="form-control" id="kodeBooking">  
+                    </div> 
+                    <div class="d-flex align-items-end">
+                        <button type="button" class="btn" id="btnKonfrCheckIn" style="min-width: 120px;">Konfirmasi Check-in</button>
+                    </div>
+                </div>
+                <h1 style="width: 70%;height: 100px"></h1>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal Konfirmasi -->
+    <div class="modal fade" id="konfirmasiModal" tabindex="-1" aria-labelledby="konfirmasiModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                    <h5 class="modal-title" style="color: #FFFFFF;">
+                        <i class="fas fa-check-circle" style="color: white; margin-right: 10px;"></i>
+                        Konfirmasi Check-in
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="konfirmasiIsi" style="color: #333;">
+                    <!-- Isi konfirmasi diisi lewat JS -->
+                </div>
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn" id="btnCheckIn">Check-in</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Peringatan -->
+    <div class="modal fade" id="pesanModal" tabindex="-1" aria-labelledby="pesanModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                    <h5 class="modal-title" style="color: #FFFFFF;">
+                        <i class="fas fa-exclamation-triangle" style="color: #FFC107; margin-right: 10px;"></i>
+                        Peringatan
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="pesanIsi" style="color: #333;">
+                    <!-- Isi pesan diisi lewat JS -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" id="btnTutup" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sukses -->
+    <div class="modal fade" id="modalSukses" tabindex="-1" aria-labelledby="modalSuksesLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                    <h5 class="modal-title" style="color: #FFFFFF;">
+                        <i class="fas fa-check-circle me-2" style="color: white; margin-right: 10px;"></i>
+                        Berhasil
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalIsi" style="color: #333;">
+                    <!-- Isi info diisi lewat JS -->
+                </div>
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn" id="btnTutupMS">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- <script src="/static/js/tic-online.js"></script> -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const inputKodeBooking = document.getElementById('kodeBooking');
+        const modal = document.getElementById('modalInfo');
+        const modalContent = document.getElementById('modalContent');
+        const btnKonfrCheckIn = document.getElementById('btnKonfrCheckIn');
+        const btnCheckIn = document.getElementById('btnCheckIn');
+        const kasir = document.getElementById('kasir');
+
+        // Fokus ke input saat halaman dimuat
+        inputKodeBooking.focus();
+
+        // Atur tampilan jadi huruf besar dan bold via JavaScript
+        inputKodeBooking.style.textTransform = "uppercase";
+        inputKodeBooking.style.fontWeight = "bold";
+
+        // Fungsi untuk menangani event keypress
+        function handleEnterKey(event, nextElement) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                nextElement.focus();
+            }
+        }
+
+        function handleArrowRight(event, nextElement) {
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                nextElement.focus();
+            }
+        }
+
+        function handleArrowLeft(event, previousElement) {
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                previousElement.focus();
+            }
+        }
+
+        function tampilkanModalPeringatan({ 
+            message, 
+            kodeTiket = null, 
+            tglPesan = null, 
+            namaPemesan = null, 
+            bookingStatus = null
+        }) {
+            const pesanModalEl = document.getElementById("pesanModal");
+            const pesanIsiEl = document.getElementById("pesanIsi");
+
+            let html = `
+                <div style="font-size: 14px; color: #333;">
+                    <p style="font-size: 16px; color: #dc3545;">
+                        ${message}
+                    </p>
+            `;
+
+            // Jika ada data tambahan → tampilkan sebagai detail
+            if (kodeTiket || tglPesan || namaPemesan || bookingStatus) {
+                html += `<hr style="margin: 10px 0;"><dl class="row mb-0">`;
+
+                if (kodeTiket) {
+                html += `
+                    <dt class="col-5">Kode Tiket</dt>
+                    <dd class="col-7"><strong>${kodeTiket}</strong></dd>
+                    `;
+                }
+
+                if (tglPesan) {
+                    html += `
+                        <dd class="col-5">Tanggal Pemesanan</dd>
+                        <dd class="col-7">${tglPesan}</dd>
+                    `;
+                }
+
+                if (namaPemesan) {
+                    html += `
+                        <dd class="col-5">Nama Pemesan</dd>
+                        <dd class="col-7">${namaPemesan}</dd>
+                    `;
+                }
+
+                if (bookingStatus) {
+                    const badgeClass = bookingStatus === 'Kadaluarsa'
+                        ? 'bg-danger'
+                        : 'bg-secondary';
+                    
+                    html += `
+                        <dt class="col-5">Booking Status</dt>
+                        <dd class="col-7">
+                            <span class="badge ${badgeClass}">${bookingStatus}</span>
+                        </dd>
+                    `;
+                }
+
+                html += `</dl>`;
+            }
+
+            html += `</div>`;
+
+            // Set inner HTML
+            pesanIsiEl.innerHTML = html;
+
+            // Tampilkan modal
+            const pesanModal = new bootstrap.Modal(pesanModalEl);
+            pesanModal.show();
+
+            // Fokus tombol Tutup saat modal ditampilkan
+            const focusBtnTutup = () => {
+                const btnTutup = document.getElementById("btnTutup");
+                if (btnTutup) {
+                    btnTutup.focus();
+                } else {
+                    setTimeout(focusBtnTutup, 20);
+                }
+            };
+
+            const onShown = () => {
+                focusBtnTutup();
+                pesanModalEl.removeEventListener('shown.bs.modal', onShown);
+            };
+            
+            pesanModalEl.addEventListener('hidden.bs.modal', onShown);
+
+            // Reset dan fokus ke input setelah modal ditutup
+            pesanModalEl.addEventListener('shown.bs.modal', () => {
+                const btnTutup = document.getElementById("btnTutup");
+                focusBtnTutup();
+                pesanModalEl.removeEventListener('shown.bs.modal', onShown);
+            });
+
+            // Setelah modal ditutup → fokus ke input kode booking
+            pesanModalEl.addEventListener('hidden.bs.modal', () => {
+                const inputKodeBooking = document.getElementById("kodeBooking");
+                if (inputKodeBooking) {
+                    inputKodeBooking.value = '';
+                    inputKodeBooking.focus();
+                }
+            }, { once: true });
+        }
+
+        function tampilkanModalKonfirmasi(htmlIsi, kodeTiket = null) {
+            const konfirmasiModalEl = document.getElementById("konfirmasiModal");
+            const konfirmasiIsiEl = document.getElementById("konfirmasiIsi");
+            const inputKodeBooking = document.getElementById("kodeBooking");
+
+            // Set isi modal
+            konfirmasiIsiEl.innerHTML = htmlIsi;
+
+            // Tampilkan modal
+            const modalInstance = new bootstrap.Modal(konfirmasiModalEl);
+            modalInstance.show();
+
+            // Handle ketika modal ditutup → reset input & fokus
+            const onModalHidden = () => {
+                if (inputKodeBooking) {
+                    inputKodeBooking.value = '';
+                    inputKodeBooking.focus();
+                }
+                // Lepas listener supaya aman
+                konfirmasiModalEl.removeEventListener('hidden.bs.modal', onModalHidden);
+            };
+            konfirmasiModalEl.addEventListener('hidden.bs.modal', onModalHidden, { once: true });
+
+            // Handle saat modal ditampilkan → fokus dan pasang event listener tombol Check-in
+            const onShown = () => {
+                console.log("Modal ditampilkan, mencari tombol btnCheckIn...");
+                const oldBtn = document.getElementById("btnCheckIn");
+                if (!oldBtn) return;
+
+                // Ganti tombol agar event listener tidak double
+                const newBtn = oldBtn.cloneNode(true);
+                oldBtn.replaceWith(newBtn);
+                newBtn.focus();
+
+                // Set data-kode di tombol jika kodeTiket tersedia
+                if (kodeTiket) {
+                    newBtn.setAttribute("data-kode", kodeTiket);
+                }
+
+                newBtn.addEventListener("click", async () => {
+                    const kode = newBtn.getAttribute("data-kode");
+                    if (!kode) return;
+
+                    newBtn.disabled = true;
+                    newBtn.textContent = "Processing...";
+                    console.log("Kode yang dikirim untuk check-in:", kode);
+
+                    // force re-render before fetch
+                    await new Promise(resolve => setTimeout(resolve, 50));
+
+                    try {
+                        const res = await fetch(`/checkin/${kode}`, {
+                            method: "POST",
+                            headers: {
+                                 "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                kode_booking: kode,
+                            }),
+                        });
+
+                        const data = await res.json();
+                        console.log("Response dari server:", data);
+
+                        if (!res.ok) {
+                            tampilkanModalPeringatan({
+                                message: data.message || "Terjadi kesalahan saat proses check-in.",
+                                kodeTiket: data.kode_tiket || "",
+                                tglPesan: data.tgl_pesan || "",
+                            });
+                        } else {
+                            // Sukses: tutup modal konfirmasi lalu tampilkan modal sukses
+                            const modalInst = bootstrap.Modal.getInstance(konfirmasiModalEl);
+                            if (modalInst) modalInst.hide();
+
+                            // Tunggu sebentar sebelum buka modal sukses
+                            setTimeout(() => {
+                                tampilkanModalSukses("Check-In sukses!");
+                            }, 300);
+                        }
+                    } catch (err) {
+                        console.error("Gagal terhubung ke server:", err);
+                        tampilkanModalPeringatan({
+                            message: "Terjadi kesalahan jaringan saat proses check-in.",
+                        });
+                    } finally {
+                        newBtn.disabled = false;
+                        newBtn.textContent = "Check-in";
+
+                        inputKodeBooking.value = "";
+                        inputKodeBooking.focus();
+                    }
+                });
+
+                konfirmasiModalEl.removeEventListener("shown.bs.modal", onShown);
+            };
+
+            konfirmasiModalEl.addEventListener("shown.bs.modal", onShown, { once: true });
+        }
+
+        function tampilkanModalSukses(pesan) {
+            const modalEl = document.getElementById("modalSukses");
+            const modalIsi = document.getElementById("modalIsi");
+            const btnTutupMS = document.getElementById("btnTutupMS");
+            const kodeBookingEl = document.getElementById("kodeBooking");
+
+            // Pastikan semua elemen ada
+            if (!modalEl || !modalIsi || !btnTutupMS || !kodeBookingEl) return;
+
+            // Isi pesan
+            modalIsi.innerHTML = pesan;
+
+            // Tampilkan modal
+            const modalInstance = new bootstrap.Modal(modalEl);
+            modalInstance.show();
+
+            // Saat modal ditampilkan
+            modalEl.addEventListener("shown.bs.modal", () => {
+                // Fokus ke tombol Tutup setelah animasi modal selesai
+                setTimeout(() => {
+                    btnTutupMS.focus();
+                }, 100);
+            }, { once:true });
+
+            // Fungsi untuk menutup modal dan bersihkan backdrop
+            const handleTutup = () => {
+                modalInstance.hide();
+
+                // Pastikan backdrop dihapus jika masih ada
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+
+                document.body.classList.remove();
+                document.body.style = "";
+
+                // Fokus ke input kode booking setelah modal ditutup
+                setTimeout(() => {
+                    kodeBookingEl.focus();
+                }, 300);
+            };
+
+            // Event klik tombol
+            btnTutupMS.onclick = handleTutup;
+
+            // Tekan Enter di tombol
+            btnTutupMS.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    handleTutup();
+                }
+            };
+
+            // Jika user klik tombol "X" (close), juga atur fokus kembali
+            modalEl.addEventListener("hidden.bs.modal", () => {
+                setTimeout(() => {
+                    kodeBookingEl.focus();
+                }, 300);
+            }, { once: true });
+        }
+
+        btnKonfrCheckIn.addEventListener('click', function () {
+            handleKonfirmasiCheckIn();
+        });
+
+        btnKonfrCheckIn.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleKonfirmasiCheckIn();
+            } 
+        });
+
+        function resetForm() {
+            inputKodeBooking.value = '';
+            inputKodeBooking.focus();
+        }
+
+        inputKodeBooking.addEventListener('keydown', function(event) {
+            handleEnterKey(event, btnKonfrCheckIn);
+        });
+
+        inputKodeBooking.addEventListener('keydown', function(event) {
+           handleArrowRight(event, btnKonfrCheckIn); 
+        });
+
+        btnKonfrCheckIn.addEventListener('keydown', function(event) {
+           handleArrowLeft(event, inputKodeBooking); 
+        });
+
+        async function handleKonfirmasiCheckIn() {
+            const kode = inputKodeBooking.value.trim();
+
+            if (!kode) {
+                tampilkanModalPeringatan({
+                    message: "Kode booking tidak boleh kosong.!",
+                });
+                return;
+            }
+
+            try {
+                const res = await fetch(`/booking/${kode}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    // Tangani error dari backend: tiket expired, sudah check-in, tidak ditemukan, dll.
+                    tampilkanModalPeringatan({
+                        message: data.message || "Tiket tidak valid.",
+                        kodeTiket: data.kode_tiket || data.kode_booking || null,
+                        tglPesan: data.tgl_pesan || data.tgl_pemesanan || null,
+                        namaPemesan: data.nama_pemesan || null,
+                        bookingStatus: data.booking_status || null,
+                    });
+                    return;
+                }
+
+                // Fallback field
+                const kodeTicket = data.kode_tiket || "-";
+                const tanggal = data.tgl_pesan || "-";
+                const namaPemesan = data.nama_pemesan || "-"
+                const dewasa = data.dewasa || "-"
+                const anak = data.anak || "-" 
+                const jmlPeng = data.jml_pengunjung || "-"
+                const metode = data.metode_pem || "-"
+                const paymentStatus = data.payment_status || "N/A";
+                const bookingStatus = data.booking_status || "N/A";
+
+                // Jika valid, lanjut tampilkan modal konfirmasi
+                const htmlKonfirmasi = `
+                    <div>
+                        <h5 class="mb-3">🎟️ Tiket Masuk</h5>
+                        <hr class="my-3">
+                        <dl class="row mb-0">
+                            <dt class="col-6">Kode Tiket</dt>
+                            <dd class="col-6"><strong>${kodeTicket}</strong></dd>
+
+                            <dt class="col-6" style="font-weight: normal;color: #555;">Tgl Pesan</dt>
+                            <dd class="col-6"><small class="text-muted">${tanggal}</small></dd>
+
+                            <dt class="col-6" style="font-weight: normal;color: #555;">Nama Pemesan</dt>
+                            <dd class="col-6">${namaPemesan}</dd>
+
+                            <dt class="col-6" style="font-weight: normal;color: #555;">Dewasa</dt>
+                            <dd class="col-6">${dewasa}</dd>
+
+                            <dt class="col-6" style="font-weight: normal;color: #555;">Anak</dt>
+                            <dd class="col-6">${anak}</dd>
+
+                            <dt class="col-6" style="font-weight: normal;color: #555;">Jumlah Pengunjung</dt>
+                            <dd class="col-6">${jmlPeng}</dd>
+
+                            <dt class="col-6" style="font-weight: normal;color: #555;">Metode Pembayaran</dt>
+                            <dd class="col-6">${metode}</dd>
+
+                            <dt class="col-6">Payment Status</dt>
+                            <dd class="col-6">
+                                <span class="badge bg-success">${paymentStatus}</span>
+                            </dd>
+                            <dt class="col-6">Booking Status</dt>
+                            <dd class="col-6">
+                                <span class="badge bg-info">${bookingStatus}</span>
+                            </dd>
+                        </dl>
+                    </div>
+                `;
+                // Tampilkan modal
+                tampilkanModalKonfirmasi(htmlKonfirmasi, data.kode_tiket);
+
+            } catch (err) {
+                console.error("Network error:", err);
+                tampilkanModalPeringatan({
+                    message: "Terjadi kesalahan jaringan. Silakan coba lagi.",
+                });
+            }
+        }
+    });
+ </script>
+{{ end }}

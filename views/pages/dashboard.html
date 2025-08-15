@@ -1,0 +1,108 @@
+{{ define "content" }}
+<style>
+    .dashboard-section {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        padding: 20px;
+        justify-content: flex-start;
+        align-items: flex-start;
+        max-width: 1200px;
+        margin-left: 0;
+        margin-right: auto;
+    }
+    .dashboard-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        padding: 20px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        transition: box-shadow 0.2s;
+        border: 1px solid #e3e3e3;
+        min-width: 220px;
+        min-height: 120px;
+    }
+    .dashboard-card i {
+        font-size: 2.2rem;
+        color: #4facfe;
+    }
+    .dashboard-card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    .dashboard-card-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #222;
+    }
+    @media (max-width: 900px) {
+        .dashboard-section {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .dashboard-chart-section-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+    .dashboard-chart-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        padding: 20px 18px;
+        border: 1px solid #e3e3e3;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 220px;
+        min-height: 120px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .dashboard-chart-section-wrapper {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        padding: 0 20px 20px 20px;
+        max-width: 1200px;
+        margin-left: 0;
+        margin-right: auto;
+        align-items: flex-start;
+    }
+    .dashboard-label {
+        font-size: 2rem;
+        font-weight: 500;
+        margin: 0 0 0.5em 20px;
+        color: #4facfe;
+        letter-spacing: -1px;
+    }
+</style>
+<header>
+    <div class="dashboard-label mt-4">Dashboard</div>
+</header>
+<main>
+    <div class="dashboard-section">
+        <div class="dashboard-card">
+            <i class="material-icons">confirmation_number</i>
+            <span class="dashboard-card-title">Total Sales Today</span>
+            <span class="dashboard-card-value"></span>
+        </div>
+        <div class="dashboard-card">
+            <i class="material-icons">groups</i>
+            <span class="dashboard-card-title">Total Visitors</span>
+            <span class="dashboard-card-value"></span>
+        </div>
+        <div class="dashboard-card">
+            <i class="material-icons">attach_money</i>
+            <span class="dashboard-card-title">Total Revenue</span>
+            <span class="dashboard-card-value"></span>
+        </div>
+    </div>
+</main>
+{{ end }}

@@ -1,0 +1,713 @@
+{{ define "content" }}
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Optional: Theme (boleh pilih satu) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+
+<style>
+    .form-control {
+        box-shadow: none !important;
+    }
+
+    .floating-label-custom {
+        position: relative;
+    }
+
+    .floating-label-custom input {
+        padding: 0.75rem 0.75rem; /* atas, kanan-kiri, bawah */
+        font-size: 1rem;
+    }
+
+    /* Label default di tengah input (seperti placeholder) */
+    .floating-label-custom label {
+        position: absolute;
+        top: 50;
+        left: 0.75rem;
+        transform: translateY(-50%);
+        background-color: white;
+        border-radius: 8px;
+        padding: 0 0.25rem;
+        font-size: 1rem;
+        color: #aaa;
+        transition: all 0.2s ease;
+        pointer-events: none;
+        opacity: 0; /* awalnya tidak tampil */
+    }
+
+    /* Saat input difokuskan atau berisi, label naik */
+    .floating-label-custom input:focus + label,
+    .floating-label-custom input:not(:placeholder-shown) + label {
+        top: 0.2rem;
+        left: 0.6rem;
+        font-size: 0.75rem;
+        color: #007bff;
+        opacity: 1;
+    }
+
+    /* Trik: sembunyikan placeholder saat fokus */
+    .floating-label-custom input:focus::placeholder {
+        color: transparent;
+    }
+
+    table {
+        border: 1px solid #ccc !important;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+</style>
+<div class="container">
+<!-- Judul -->
+    <h2 class="text-start fw-bold mt-5">
+        <i class="material-icons">event_available</i> Reservation
+    </h2>
+
+    <div>
+        <input type="hidden" id="kodeBooking" readonly>
+        <input type="hidden" id="kodeTrxID" readonly>
+        <input type="hidden" id="hargaDewasa" readonly>
+        <input type="hidden" id="hargaAnak" readonly>
+        <input type="hidden" id="noInvoice" readonly>
+    </div>
+    <div style="margin-top: 67px;">
+        <form id="bookingForm" style="max-width: 400px;">
+            <div class="position-relative floating-label-custom mb-3">
+                <input type="text" class="form-control" id="namaPemesan" placeholder="Nama Pemesan" required>
+                <label for="namaPemesan">Nama Pemesan</label>
+                <div class="invalid-feedback">Nama pemesan harus diisi</div>
+            </div>
+            <div class="position-relative floating-label-custom mb-3">
+                <input type="text" class="form-control" id="noTelepon" placeholder="Nomor Telepon">
+                <label for="noTelepon">Nomor Telepon</label>
+                <div class="invalid-feedback">Nomor telepon harus diisi</div>
+            </div>
+            <div class="position-relative floating-label-custom mb-3">
+                <input type="text" id="tglKunjungan" class="form-control flatpickr-alt-input" placeholder="Pilih Tanggal">
+                <label for="tglKunjungan">Pilih Tanggal</label>
+                <div class="invalid-feedback">Tanggal kunjungan harus diisi</div>
+            </div>
+
+            <div class="position-relative floating-label-custom mb-3">
+                <input type="text" class="form-control" id="dewasa" placeholder="Jumlah Dewasa">
+                <label for="dewasa">Jumlah Dewasa</label>
+                <div class="invalid-feedback">Jumlah dewasa harus diisi</div>
+            </div>
+            <div class="position-relative floating-label-custom mb-3">
+                <input type="text" class="form-control" id="anak" placeholder="Jumlah anak">
+                <label for="anak">Jumlah Anak</label>
+                <div class="invalid-feedback">Jumlah anak harus diisi</div>
+            </div>
+            <!-- Tombol Submit dan Reset -->
+            <div class="row mt-4">
+                <div class="col-6">
+                    <button type="button" id="btnProses" class="btn w-100">Proses</button>
+                </div>
+                <div class="col-6">
+                    <button type="button" id="btnReset" class="btn w-100">Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal informasi singkat reservasi -->
+    <div class="modal fade" id="konfirmasiModal" tabindex="-1" aria-labelledby="konfirmasiModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
+                    <h5 class="modal-title" style="color: #FFFFFF;">
+                        <i class="fas fa-user-check me-2" style="color: white; margin-right: 10px;"></i>
+                        Reservasi
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="konfirmasiIsi" style="color: #333;">
+                    <!-- Isi konfirmasi diisi lewat JS -->
+                </div>
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn" id="btnInvoice">Download Invoice</button>
+                    <button type="button" class="btn" id="btnTutup">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kontainer tersembunyi untuk PDF invoice -->
+    <div id="invoiceContent" style="display:none;">
+        <!-- Ini akan diisi via JS ketika user klik tombol Download Invoice -->
+    </div>
+
+
+</div>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <!-- PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- <script src="/static/js/tic-reserv.js"></script> -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const namaInput = document.getElementById('namaPemesan');
+        const telpInput = document.getElementById('noTelepon');
+        const tglInput = document.querySelector('#tglKunjungan');
+        const dewasaInput = document.getElementById('dewasa');
+        const anakInput = document.getElementById('anak');
+        const btnProses = document.getElementById('btnProses');
+        const btnReset = document.getElementById('btnReset');
+        const kodeBooking = document.getElementById('kodeBooking');
+        const kodeTrxId = document.getElementById('kodeTrxID');
+
+        namaInput.focus();
+
+        fetch("/transaksi-id")
+            .then(res => res.json())
+            .then(data => {
+                kodeBooking.value = data.kode_booking;
+                kodeTrxId.value = data.trx_id;
+            })
+            .catch(err => {
+                console.error("Gagal mengambil kode booking:", err);
+            });
+        
+        fetch("/price")
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('hargaDewasa').value = `Rp ${parseFloat(data.harga_dewasa).toLocaleString('id-ID')}`;
+                document.getElementById('hargaAnak').value = `Rp ${parseFloat(data.harga_anak).toLocaleString('id-ID')}`;
+            })
+            .catch(error => {
+                console.error("Gagal mengambil harga:", error);
+            });
+
+        fetch("/invoice")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("noInvoice").value = data.no_invoice;
+            })
+            .catch(error => {
+                console.error("Gagal generate no_invoice:", error);
+            });
+
+        function refreshKodeBooking() {
+            // Ambil kode booking baru dan transaksi ID dari backend
+            fetch("/transaksi-id")
+                .then(res => res.json())
+                .then(data => {
+                    // Update element input dengan kode baru
+                    document.getElementById('kodeBooking').value = data.kode_booking;
+                    document.getElementById('kodeTrxID').value = data.trx_id;
+                })
+                .catch(error => {
+                    console.error("Gagal mengambil kode booking:", error);
+                });
+
+            // Ambil kapasitas kuota terbaru
+            fetch('api/capacities')
+                .then(res => res.json())
+                .then(data => {
+                    kuotaAwalDewasa = data.max_dewasa;
+                    kuotaAwalAnak = data.max_anak;
+
+                    document.getElementById('quotaDewasa').textContent = kuotaAwalDewasa;
+                    document.getElementById('quotaAnak').textContent = kuotaAwalAnak;
+
+                    // Pasang event listener input setelah kuota tersedia
+                    dewasaInput.addEventListener('input', updateKuota);
+                    anakInput.addEventListener('input', updateKuota);
+                })
+                .catch(error => {
+                    console.error("Gagal memperbarui kuota:", error);
+                });
+        }
+
+        function resetInput() {
+            namaInput.value = '';
+            telpInput.value = '';
+            dewasaInput.value = '';
+            anakInput.value = ''; 
+            tglInstance.altInput.value = 'Pilih Tanggal';
+        }
+
+        const tglInstance = flatpickr("#tglKunjungan", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d F Y",
+            allowInput: true,
+            disableMobile: true,
+            clickOpens: false,
+
+        // Ketika tanggal dipilih dan kalender ditutup
+            onClose: function(selectedDates) {
+                // Jika user sudah pilih tanggal, maka pindah ke input berikutnya
+                if (selectedDates.length > 0) {
+                    dewasaInput.focus();
+                }
+            }
+
+        });
+
+        // Realtime: filter input
+        namaInput.addEventListener('input', () => {
+            namaInput.value = namaInput.value.replace(/[^a-zA-Z\s]/g, '').toUpperCase();
+        });
+
+        telpInput.addEventListener('input', () => {
+            telpInput.value = telpInput.value.replace(/[^0-9]/g, '');
+        });
+
+        // Fungsi untuk menangani event keypress
+        function handleEnterKey(event, nextElement) {
+            if (event.key === 'Enter' || event.key === 'ArrowDown') {
+                if (document.activeElement.tagName.toLowerCase() !== 'select') {
+                    event.preventDefault();
+                    nextElement.focus();
+                }
+            }
+        }
+
+        // Fungsi untuk menangani tombol ArrowDown
+        function handleArrowDownKey(event, nextElement) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                nextElement.focus();
+            }
+        }
+
+        // Fungsi untuk menangani tombol ArrowUp
+        function handleArrowUpKey(event, previousElement) {
+            if (event.key === "ArrowUp") {
+                event.preventDefault();
+                previousElement.focus();
+            }
+        }
+
+        // Fungsi untuk menangani tombol panah Kanan
+        function handleArrowRight(event, nextElement) {
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                nextElement.focus();
+            }
+        }
+
+        // Fungsi untuk menangani tombol panah Kiri
+        function handleArrowLeft(event, previousElement) {
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                previousElement.focus();
+            }
+        }
+
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR'
+            }).format(angka);
+        }
+
+        function tampilkanModalKonfirmasi(htmlIsi, noInvoice) {
+            const konfirmasiModalEl = document.getElementById("konfirmasiModal");
+            const konfirmasiIsiEl = document.getElementById("konfirmasiIsi");
+            const namaInput = document.getElementById("namaPemesan");
+            const btnTutup = document.getElementById("btnTutup");
+
+            // Set isi modal
+            konfirmasiIsiEl.innerHTML = htmlIsi;
+
+            // Tampilkan modal
+            const modalInstance = new bootstrap.Modal(konfirmasiModalEl);
+            modalInstance.show();
+
+            // Saat modal ditutup, reset input dan fokus kembali
+            const onModalHidden = () => {
+                if (namaInput) {
+                    namaInput.focus();
+                }
+
+                // Pastikan backdrop hilang jika tertinggal
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+                konfirmasiModalEl.removeEventListener('hidden.bs.modal', onModalHidden);
+            };
+            konfirmasiModalEl.addEventListener('hidden.bs.modal', onModalHidden, { once: true });
+
+            // Saat modal ditampilkan, pasang ulang event listener tombol Save PDF
+            const onShown = () => {
+                const oldBtn = document.getElementById("btnInvoice");
+                if (!oldBtn) return;
+
+                // Hindari event listener ganda
+                const newBtn = oldBtn.cloneNode(true);
+                oldBtn.replaceWith(newBtn);
+                newBtn.focus();
+
+                newBtn.addEventListener("click", () => {
+                    // Eksekusi export PDF - bisa ganti sesuai kebutuhan
+                    const elementToPrint = document.getElementById("konfirmasiIsi");
+                    if (!elementToPrint) return;
+
+                    // Contoh pakai html2pdf.js
+                    html2pdf()
+                        .set({ margin: 10, filename: `${noInvoice}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' }})
+                        .from(elementToPrint)
+                        .save();
+                });
+
+                konfirmasiModalEl.removeEventListener("shown.bs.modal", onShown);
+            };
+            konfirmasiModalEl.addEventListener("shown.bs.modal", onShown, { once: true });
+
+            if (btnTutup) {
+                btnTutup.addEventListener("click", () => {
+                    modalInstance.hide();
+
+                    // Pastikan backdrop benar-benar dihapus jika masih tertinggal
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                    document.body.classList.remove('modal-open');
+                    document.body.style = "";
+                });
+            }
+        }
+
+        namaInput.addEventListener('keydown', function(event) {
+            handleEnterKey(event, telpInput);
+        });
+
+        telpInput.addEventListener('keydown', function(event) {
+            handleEnterKey(event, tglInstance.altInput);
+        });
+
+        telpInput.addEventListener('keydown', function(event) {
+            handleArrowUpKey(event, namaInput);
+        });
+
+        dewasaInput.addEventListener('keydown', function(event) {
+            handleEnterKey(event, anakInput);
+        });
+
+        namaInput.addEventListener('keydown', function(event) {
+            handleArrowDownKey(event, telpInput);
+        });
+
+        dewasaInput.addEventListener('keydown', function(event) {
+            handleArrowDownKey(event, anakInput);
+        });
+
+        anakInput.addEventListener('keydown', function(event) {
+            handleEnterKey(event, btnProses);
+        });
+
+        anakInput.addEventListener('keydown', function(event) {
+            handleArrowUpKey(event, dewasaInput);
+        });
+
+        btnProses.addEventListener('keydown', function(event) {
+            handleArrowUpKey(event, anakInput);
+        });
+
+        btnProses.addEventListener('keydown', function(event) {
+            handleArrowRight(event, btnReset);
+        });
+        
+        btnReset.addEventListener('keydown', function(event) {
+            handleArrowLeft(event, btnProses);
+        });
+
+        btnReset.addEventListener('click', () => {
+            isResetting = true;
+
+            // Kosongkan input biasa dan hapus validasi
+            [namaInput, telpInput, dewasaInput, anakInput].forEach(input => {
+                input.value = '';
+                input.classList.remove('is-invalid');
+            });
+
+            // Reset flatpickr
+            tglInput._flatpickr.clear();
+            tglInput.classList.remove('is-invalid');
+            tglInput._flatpickr.altInput.classList.remove('is-invalid');
+
+            namaInput.focus();
+
+            // Pastikan flag di-reset setelah clear selesai
+            setTimeout(() => {
+                isResetting = false;
+            }, 100);
+
+        });
+
+        telpInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === 'ArrowDown') {
+                event.preventDefault();
+                tglInstance.altInput.focus();
+            }
+        });
+
+        dewasaInput.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                tglInstance.altInput.focus();
+            }
+        });
+
+        tglInstance.config.onChange.push(function () {
+            dewasaInput.focus();
+        });
+
+        // Saat input tanggal difokuskan, langsung buka flatpickr
+        tglInstance.altInput.addEventListener('focus', function () {
+            tglInstance.open();
+
+            // Delay untuk memastikan kalender sudah muncul sebelum fokus ke tanggal aktif
+            setTimeout(() => {
+                const calendar = document.querySelector('.flatpickr-calendar');
+                if (calendar && calendar.classList.contains('open')) {
+                    const activeDay =
+                        calendar.querySelector('.flatpickr-day.today') ||
+                        calendar.querySelector('.flatpickr-day.selected');
+
+                    if (activeDay) {
+                        activeDay.focus(); // fokus langsung ke tanggal aktif
+                    }
+                }
+            }, 50);
+        });
+
+        tglInstance.altInput.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault(); // Cegah scroll
+
+                // Buka kalender
+                tglInstance.open();
+                
+                setTimeout(() => {
+                    const calendar = document.querySelector('.flatpickr-calendar');
+                    if (calendar && calendar.classList.contains('open')) {
+                        const activeDay =
+                            calendar.querySelector('.flatpickr-day.today') ||
+                            calendar.querySelector('.flatpickr-day.selected');
+
+                        if (activeDay) {
+                            activeDay.focus(); // arahkan ke tanggal aktif
+                        }
+                    }
+                }, 50);
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (tglInstance.selectedDates.length > 0) {
+                    dewasaInput.focus();
+                }
+            }
+
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                telpInput.focus();
+            }
+        });
+
+        btnProses.addEventListener("keydown", function(event) {
+            if (event.key === "ArrowUp") {
+                event.preventDefault();
+                choicesWrapper.focus();
+            }
+        });
+
+        [dewasaInput, anakInput].forEach(input => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/[^0-9]/g, '').slice(0, 3);
+            });
+        });
+
+        // Validasi saat proses
+        btnProses.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            let valid = true;
+
+            // Reset semua error (termasuk altInput untuk flatpickr)
+            [namaInput, telpInput, tglInput, dewasaInput, anakInput].forEach(el => el.classList.remove('is-invalid'));
+
+            tglInput.classList.remove('is-invalid');
+            if (tglInput._flatpickr) {
+                tglInput._flatpickr.altInput.classList.remove('is-invalid');
+            }
+
+            // Validasi nama
+            if (!/^[a-zA-Z\s]+$/.test(namaInput.value.trim())) {
+                namaInput.classList.add('is-invalid');
+                valid = false;
+            }
+
+            // Validasi telepon
+            if (!/^\d+$/.test(telpInput.value.trim())) {
+                telpInput.classList.add('is-invalid');
+                valid = false;
+            }
+
+            // Validasi tanggal kunjungan
+            if (tglInput.value.trim() === "") {
+                tglInput.classList.add('is-invalid'); // input asli (hidden)
+                tglInstance.altInput.classList.add('is-invalid'); // input yang terlihat user
+                valid = false;
+            }
+
+            // Validasi jumlah dewasa
+            if (!/^\d+$/.test(dewasaInput.value.trim())) {
+                dewasaInput.classList.add('is-invalid');
+                valid = false;
+            }
+
+            // Validasi jumlah anak
+            if (!/^\d+$/.test(anakInput.value.trim())) {
+                anakInput.classList.add('is-invalid');
+                valid = false;
+            }
+
+            if (!valid) {
+                e.preventDefault(); // Stop submit
+                return;
+            }
+
+            // Ambil data dari form
+            const kodeBookingEl = document.getElementById('kodeBooking').value;
+            const kodeTrxIDEl = document.getElementById('kodeTrxID').value;
+            const namaPemesanEl = document.getElementById('namaPemesan').value;
+            const noTeleponEl = document.getElementById('noTelepon').value;
+            const tglKunjunganEl = document.getElementById('tglKunjungan').value;
+            const dewasaEl = parseInt(document.getElementById('dewasa').value);
+            const anakEl = parseInt(document.getElementById('anak').value);
+            const noInvoiceEl = document.getElementById('noInvoice').value;
+
+            // Jika semua sudah valid kirim data ke backend
+            const data = {
+                kodeBooking: kodeBookingEl,
+                transaksiId: kodeTrxIDEl,
+                namaPemesan: namaPemesanEl,
+                noTelepon: noTeleponEl,
+                tglKunjungan: tglKunjunganEl,
+                dewasa: dewasaEl,
+                anak: anakEl,
+                noInvoice: noInvoiceEl,
+            };
+
+            fetch('/reservation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(response => {
+                if (response.message === "Pemesanan berhasil") {
+                    // Tampilkan data ke modal
+                    const totalPengunjung = response.jml_pengunjung;
+                    const totalBayar = response.total_bayar || 0; // Ambil dari response jika tersedia
+
+                    const htmlKonfirmasi = `
+                        <div>
+                            <div style="font-size: 14px;">
+                                <h5 class="mb-3">Detail Pemesanan</h5>
+                                <hr>
+                                <div class="row mb-2">
+                                    <div class="col-3 fw-bold">Nomor Invoice</div>
+                                    <div class="col-8">${response.no_invoice}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-3 fw-bold">Tgl Pemesanan</div>
+                                    <div class="col-8">${response.tgl_pemesanan}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-3 fw-bold">Tanggal Kunjungan</div>
+                                    <div class="col-8">${response.tgl_kunjungan}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-3 fw-bold">Nama Pemesan</div>
+                                    <div class="col-8">${namaPemesanEl}</div>
+                                </div>
+                            </div>
+                            <table class="table table-bordered mt-3" style="font-size: 12px" style="border: 1px solid #ccc !important!;border-collapse: collapse; width: 100%;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Kategori</th>
+                                        <th>Qty</th>
+                                        <th>Harga</th>
+                                        <th style="text-align: right">Total Harga</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Dewasa</td>
+                                        <td>${dewasaEl}</td>
+                                        <td>${response.harga_dewasa}</td>
+                                        <td>${response.total_harga1}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Anak</td>
+                                        <td>${anakEl}</td>
+                                        <td>${response.harga_anak}</td>
+                                        <td>${response.total_harga2}</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Sub Total</th>
+                                        <th>${response.sub_total}</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Diskon</th>
+                                        <th>0</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Total Bayar</th>
+                                        <th>${response.total_bayar}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            <div style="font-size: 12px; margin-top: 20px;">
+                                <p><b>Notes:</b><br>
+                                Silakan lakukan pembayaran dalam 1 jam setelah pemesanan. Tiket akan dibatalkan otomatis jika melewati batas waktu.</p>
+                                
+                                <p><b>Pembayaran via:</b><br>
+                                BCA - 1234567890 a.n. Solusi Mobile</p>
+
+                                <p>Konfirmasi pembayaran:<br>
+                                WhatsApp: 0857-6824-4475<br>
+                                Email: dedeeapr17@gmail.com</p>
+                            </div>
+                        </div>
+                    `;
+
+
+                    // Tampilkan modal konfirmasi
+                    tampilkanModalKonfirmasi(htmlKonfirmasi, response.no_invoice);
+                    resetInput();
+                    refreshKodeBooking();
+
+                    fetch("/invoice")
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById("noInvoice").value = data.no_invoice;
+                        })
+                        .catch(error => {
+                            console.error("Gagal generate no_invoice:", error);
+                        });
+
+                } else {
+                    alert("Gagal: " + response.error);
+                }
+            })
+            .catch(error => {
+                console.error("Error", error);
+                alert("Terjadi kesalahan server.");
+            });
+        });
+    });
+</script>
+{{ end }}
