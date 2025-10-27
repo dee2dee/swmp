@@ -1,8 +1,8 @@
 # SWMP — Swimming Pool Ticket Management Platform
 
 **SWMP (Swimming Pool Management Platform)** 
-adalah aplikasi web untuk mengelola **pemesanan tiket kolam renang** secara **offline dan online**.  
-Dibangun menggunakan **Golang (Gin Framework)** dengan arsitektur **MVC (Model–View–Controller)**, sistem **autentikasi berbasis session**, dan **multi-role dashboard** (Admin & Operator).
+adalah aplikasi web untuk mengelola **pemesanan tiket kolam renang** secara **offline dan online**.
+Dibangun menggunakan **Golang (Gin Framework)** dengan arsitektur **MVC (Model–View–Controller)**,sistem **autentikasi berbasis session**, dan **multi-role dashboard** (Admin & Operator).
 
 ---
 
@@ -31,18 +31,18 @@ Dibangun menggunakan **Golang (Gin Framework)** dengan arsitektur **MVC (Model�
 
 ## Struktur Folder Proyek
 
-swmp/
-├── controllers/ # Logika utama endpoint (Auth, Dashboard, Booking, dsb)
-├── middlewares/ # Middleware (AuthLoginRequired, NoCache, Session setup)
-├── models/      # Model dan koneksi database (MySQL)
-├── routers/     # Routing utama dan registrasi endpoint
-├── static/      # File statis (CSS, JS, Gambar)
-├── templates/   # Template HTML utama (base, layout, dashboard)
-├── views/       # Konten halaman (beranda, tiket, laporan, setting, dsb)
-├── main.go      # Entry point aplikasi
-├── go.mod       # Daftar dependensi
-├── go.sum       # Checksum dependensi
-└── .idea/       # Konfigurasi IDE (JetBrains / Goland)
+swmp/  
+├── controllers/ # Logika utama endpoint (Auth, Dashboard, Booking, dsb)  
+├── middlewares/ # Middleware (AuthLoginRequired, NoCache, Session setup)  
+├── models/      # Model dan koneksi database (MySQL)  
+├── routers/     # Routing utama dan registrasi endpoint  
+├── static/      # File statis (CSS, JS, Gambar)  
+├── templates/   # Template HTML utama (base, layout, dashboard)  
+├── views/       # Konten halaman (beranda, tiket, laporan, setting, dsb)  
+├── main.go      # Entry point aplikasi  
+├── go.mod       # Daftar dependensi  
+├── go.sum       # Checksum dependensi  
+└── .idea/       # Konfigurasi IDE (JetBrains / Goland)  
 
 
 ---
@@ -119,7 +119,7 @@ http://localhost:8080
 
 ```
 
-Tentang Developer
+**Tentang Developer**  
 Saya adalah seorang Backend Developer pemula yang sedang mengembangkan sistem manajemen tiket berbasis Golang dan Gin Framework.
 Proyek ini dibuat untuk mempelajari:
 -Autentikasi berbasis session
@@ -127,16 +127,16 @@ Proyek ini dibuat untuk mempelajari:
 -Implementasi template rendering HTML
 -Middleware dan route protection
 
-Design
-UI/UX : https://solusimobile.netlify.app/portfolio
-
-Status: Dalam pengembangan
-Kontak: dedeeapr17@gmail.com
-GitHub: https://github.com/dee2dee/swmp
-*Terbuka untuk kolaborasi dalam pengembangan.
-
+**Design**
+UI/UX : https://solusimobile.netlify.app/portfolio  
+  
+Status: Dalam pengembangan  
+Kontak: dedeeapr17@gmail.com  
+GitHub: https://github.com/dee2dee/swmp  
+*Terbuka untuk kolaborasi dalam pengembangan.  
+  
 ---
 
-Lisensi
-Proyek ini dibuat untuk tujuan pembelajaran dan pengembangan pribadi.
-Bebas digunakan dan dimodifikasi dengan mencantumkan atribusi yang sesuai.
+**Lisensi**  
+Proyek ini dibuat untuk tujuan pembelajaran dan pengembangan pribadi.  
+Bebas digunakan dan dimodifikasi dengan mencantumkan atribusi yang sesuai.  
