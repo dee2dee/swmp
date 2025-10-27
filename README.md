@@ -117,7 +117,7 @@ go run main.go
 4. Akses di Browser
 http://localhost:8080
 
----
+```
 
 Tentang Developer
 Saya adalah seorang Backend Developer pemula yang sedang mengembangkan sistem manajemen tiket berbasis Golang dan Gin Framework.
@@ -132,6 +132,7 @@ UI/UX : https://solusimobile.netlify.app/portfolio
 
 Status: Dalam pengembangan
 Kontak: dedeeapr17@gmail.com
+GitHub: https://github.com/dee2dee/swmp
 *Terbuka untuk kolaborasi dalam pengembangan.
 
 ---
